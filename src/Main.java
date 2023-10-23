@@ -20,7 +20,7 @@ public class Main {
 
         // Create and start a thread for each file object
         for (int i = 0; i < numOfDomains; i++) {
-            myThread t = new myThread();
+            myThread t = new myThread(i);
             t.start();
         }
 
@@ -30,7 +30,12 @@ public class Main {
     }
 
     public static class myThread extends Thread {
-        int id;
+        int tID;
+        int domainNum;
+        public myThread(int id) {
+            this.tID = id;
+            this.domainNum = id;
+        }
 
         @Override
         public void run() {
@@ -39,19 +44,27 @@ public class Main {
                 // generate a random number X to correspond to a column in the access matrix.
                 int num = generateRandomNum(0, numOfThreads + numOfDomains);
 
-                // if X < M
+                // if X (num) < M (numOfThreads)
                 if (num < numOfThreads) {
+                    // THREAD ATTEMPTING TO READ OR WRITE
+                    //System.out.println("[Thread: " + tID + "(domainNum)]" + " attempting to read / write");
+
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
+                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to read resource:");
+                        //arbitrator();
 
                     } else if (secondNum == 0) {
-
+                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
+                        //arbitrator();
                     }
-
                 }
                 // if X >= M, attempt to switch to domain X-M
-                else {
+                else if (num >= numOfThreads & num >= numOfThreads + numOfDomains){
+                    // THREAD ATTEMPTING TO SWITCH DO A DIFFERENT DOMAIN
+                    System.out.println("[Thread: " + tID + "(" + domainNum + ")] Attempting to switch from " + domainNum + " to D" + (num-numOfThreads));
+                    //arbitrator();
 
                 }
 
@@ -67,12 +80,18 @@ public class Main {
         return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
     }
 
-    public static void generateMatrix() {
+    // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
+    public static void arbitrator(int domain, int threadNum, int domainNum){
+    }
+    // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
+    public static void arbitrator(int domain) {
 
+    }
+
+    public static void generateMatrix() {
         // with this matrix design, values start at the first column and first row. (not zero)
         // the [0] index in both dimensions is reserved for labels used when printing matrix.
         // so accessMatrix[0][n] and accessMatrix[n][0] will not be actual values !!
-
         // I may change this later so that the actual values start at [0][0], and
         // a different design is used to print the matrix
         // - Cameron
@@ -92,14 +111,12 @@ public class Main {
                 count++;
                 accessMatrix[0][i] = "D" + count;
             }
-
         }
 
         // label the first column
         for (int i = 1; i < numOfDomains; i++) {
             accessMatrix[i][0] = "           D" + i;
         }
-
 
         // Populate the accessMatrix with random values
         for (int k = 1; k < numOfDomains; k++) {
