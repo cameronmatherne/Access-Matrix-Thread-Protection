@@ -1,10 +1,14 @@
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.Semaphore;
 
 public class Main {
     static int numOfDomains;
     static int numOfThreads;
     static String accessMatrix[][];
+    static String myMatrix[][];
+    static Semaphore accessMatrixLock[][];
+    static Semaphore matrixLock[][];
 
     public static void main(String[] args) {
 
@@ -18,14 +22,14 @@ public class Main {
         System.out.println("Object count: (enter a number between 3-7)");
         numOfThreads = input.nextInt();
 
+        generateMatrix();
+        print2DArrayAsTable(accessMatrix);
+
         // Create and start a thread for each file object
         for (int i = 0; i < numOfDomains; i++) {
             myThread t = new myThread(i);
             t.start();
         }
-
-        generateMatrix();
-        print2DArrayAsTable(accessMatrix);
 
     }
 
@@ -63,7 +67,7 @@ public class Main {
                 // if X >= M, attempt to switch to domain X-M
                 else if (num >= numOfThreads & num >= numOfThreads + numOfDomains){
                     // THREAD ATTEMPTING TO SWITCH DO A DIFFERENT DOMAIN
-                    System.out.println("[Thread: " + tID + "(" + domainNum + ")] Attempting to switch from " + domainNum + " to D" + (num-numOfThreads));
+                    System.out.println("[Thread: " + tID + "(D" + domainNum + ")] Attempting to switch from D" + domainNum + " to D" + (num-numOfThreads));
                     //arbitrator();
 
                 }
@@ -85,22 +89,24 @@ public class Main {
     }
     // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
     public static void arbitrator(int domain) {
-
     }
-
     public static void generateMatrix() {
         // with this matrix design, values start at the first column and first row. (not zero)
         // the [0] index in both dimensions is reserved for labels used when printing matrix.
         // so accessMatrix[0][n] and accessMatrix[n][0] will not be actual values !!
         // I may change this later so that the actual values start at [0][0], and
         // a different design is used to print the matrix
-        // - Cameron
 
         Random random = new Random();
         // count for labeling domains
         int count = 0;
-        // create access matrix
+        // create access matrix, used for permission checking
         accessMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
+
+        // create actual matrix, used for reading/writing values
+        myMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
+
+
         // label corner cell
         accessMatrix[0][0] = "Domain/Object";
         // label the first row
@@ -132,8 +138,16 @@ public class Main {
                 }
             }
         }
+        // initialize all the mutex semaphores for matrix access
+        /*
+        for (int i=0;i<numOfDomains;i++) {
+            for (int j=0;j<numOfThreads+numOfDomains; j++) {
+                matrixLock[i][j] = new Semaphore(1, true);
+                accessMatrixLock[i][j] = new Semaphore(1, true);
+            }
+        }
+         */
     }
-
     public static void print2DArrayAsTable(String[][] table) {
         // Determine the width of each column
         int[] columnWidths = new int[table[0].length];
