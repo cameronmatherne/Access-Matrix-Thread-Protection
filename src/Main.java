@@ -6,15 +6,9 @@ public class Main {
     static int numOfThreads;
     static String accessMatrix[][];
 
-    public static int generateRandomNum(int lowerRange, int upperRange) {
-        if (lowerRange > upperRange) {
-            throw new IllegalArgumentException("Lower range cannot be greater than the upper range.");
-        }
-        Random random = new Random();
-        return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
-    }
-
     public static void main(String[] args) {
+
+        Random random = new Random();
 
         Scanner input = new Scanner(System.in);
 
@@ -24,28 +18,14 @@ public class Main {
         System.out.println("Object count: (enter a number between 3-7)");
         numOfThreads = input.nextInt();
 
-        // create access matrix
-        accessMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
-
-        // attempt to randomly populate access matrix
-        for (int i =0; i < numOfDomains; i++) {
-            for (int j=0; j < numOfDomains + numOfThreads; j++) {
-                // the file permissions of each domain: R, W, R/W
-                if (j < numOfThreads) {
-                    accessMatrix[i][j] = null;
-                } else if (j > numOfThreads){
-                    // the property of being to switch domains: allow, N/A
-                    accessMatrix[i][j] = null;
-                }
-            }
-        }
-
         // Create and start a thread for each file object
         for (int i = 0; i < numOfDomains; i++) {
             myThread t = new myThread();
             t.start();
         }
 
+        generateMatrix();
+        print2DArrayAsTable(accessMatrix);
 
     }
 
@@ -55,14 +35,14 @@ public class Main {
         @Override
         public void run() {
             // make 5 requests for each thread
-            for (int i=0; i < 5; i++) {
+            for (int i = 0; i < 5; i++) {
                 // generate a random number X to correspond to a column in the access matrix.
                 int num = generateRandomNum(0, numOfThreads + numOfDomains);
 
                 // if X < M
                 if (num < numOfThreads) {
                     // generate another number [0,1]
-                    int secondNum = generateRandomNum(0,1);
+                    int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
 
                     } else if (secondNum == 0) {
@@ -77,21 +57,93 @@ public class Main {
 
             }
         }
-
-        public void arbitrator() {
-
-        }
-    }
-    public void generateMatrix(){
-        for (int i=0; i < numOfThreads; i++) {
-            System.out.println("F" + i + " -->");
-
-        }
-        for (int i=0; i < numOfDomains; i++) {
-            System.out.println("D" + i + " -->");
-
-        }
-
     }
 
+    public static int generateRandomNum(int lowerRange, int upperRange) {
+        if (lowerRange > upperRange) {
+            throw new IllegalArgumentException("Lower range cannot be greater than the upper range.");
+        }
+        Random random = new Random();
+        return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
+    }
+
+    public static void generateMatrix() {
+
+        // with this matrix design, values start at the first column and first row. (not zero)
+        // the [0] index in both dimensions is reserved for labels used when printing matrix.
+        // so accessMatrix[0][n] and accessMatrix[n][0] will not be actual values !!
+
+        // I may change this later so that the actual values start at [0][0], and
+        // a different design is used to print the matrix
+        // - Cameron
+
+        Random random = new Random();
+        // count for labeling domains
+        int count = 0;
+        // create access matrix
+        accessMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
+        // label corner cell
+        accessMatrix[0][0] = "Domain/Object";
+        // label the first row
+        for (int i = 1; i < numOfDomains + numOfThreads; i++) {
+            if (i < numOfThreads) {
+                accessMatrix[0][i] = "F" + i;
+            } else if (i >= numOfThreads) {
+                count++;
+                accessMatrix[0][i] = "D" + count;
+            }
+
+        }
+
+        // label the first column
+        for (int i = 1; i < numOfDomains; i++) {
+            accessMatrix[i][0] = "           D" + i;
+        }
+
+
+        // Populate the accessMatrix with random values
+        for (int k = 1; k < numOfDomains; k++) {
+            for (int j = 1; j < numOfThreads + numOfDomains; j++) {
+                if (j < numOfThreads) {
+                    // Randomly select R, W, or R/W for file permissions
+                    String[] filePermissions = {"R", "W", "R/W"};
+                    accessMatrix[k][j] = filePermissions[random.nextInt(filePermissions.length)];
+                } else {
+                    // Randomly select allow, N/A, or nothing for domain switching
+                    String[] domainSwitching = {"allow", "N/A", ""};
+                    accessMatrix[k][j] = domainSwitching[random.nextInt(domainSwitching.length)];
+                }
+            }
+        }
+    }
+
+    public static void print2DArrayAsTable(String[][] table) {
+        // Determine the width of each column
+        int[] columnWidths = new int[table[0].length];
+        for (int col = 0; col < table[0].length; col++) {
+            int maxWidth = 0;
+            for (int row = 0; row < table.length; row++) {
+                int cellWidth = table[row][col].length();
+                if (cellWidth > maxWidth) {
+                    maxWidth = cellWidth;
+                }
+            }
+            columnWidths[col] = maxWidth;
+        }
+
+        // Print the table
+        for (int row = 0; row < table.length; row++) {
+            for (int col = 0; col < table[row].length; col++) {
+                String cell = table[row][col];
+                System.out.print(cell);
+                // Add padding to align columns
+                for (int padding = 0; padding < columnWidths[col] - cell.length() + 2; padding++) {
+                    System.out.print(" ");
+                }
+            }
+            System.out.println(); // Move to the next row
+        }
+    }
 }
+
+
