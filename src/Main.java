@@ -56,12 +56,12 @@ public class Main {
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to read resource:");
-                        //arbitrator();
+                        System.out.println("[Thread: " + tID + "(D" + (domainNum+1) + ")]" + " attempting to read resource:");
+                        arbitrator(tID,num,domainNum);
 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
-                        //arbitrator();
+                        System.out.println("[Thread: " + tID + "(D" + (domainNum+1) + ")]" + " attempting to write resource:");
+                       arbitrator(tID,num,domainNum);
                     }
                 }
                 // if X >= M, attempt to switch to domain X-M
@@ -85,8 +85,23 @@ public class Main {
     }
 
     // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
-    public static void arbitrator(int domain, int threadNum, int domainNum){
+    public static boolean arbitrator(int domain, int threadNum, int domainNum) {
+        // Ensure the indices are within bounds
+        if (domain < accessMatrix.length && threadNum < accessMatrix[0].length) {
+            // Check the access matrix for permissions based on the provided parameters
+            String permission = accessMatrix[domain][threadNum];
+    
+            // Check if the domain has permission to read or write
+            if (permission.equals("R/W") || (permission.equals("R") && domain == domainNum) || (permission.equals("W") && domain == domainNum)) {
+                System.out.println("Permission allowed.");
+                return true; // Read/Write permission is allowed
+            }
+        }
+        System.out.println("Permission denied.");
+        return false; // Permission denied
     }
+    
+    
     // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
     public static void arbitrator(int domain) {
     }
