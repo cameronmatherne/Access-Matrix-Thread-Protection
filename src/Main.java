@@ -52,11 +52,11 @@ public class Main {
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
                         System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to read resource:");
-                        //arbitrator();
+                        arbitratorRead(tID,num,domainNum);
 
                     } else if (secondNum == 0) {
                         System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
-                        //arbitrator();
+                        arbitratorWrite(tID,num,domainNum);
                     }
                 }
                 // if X >= M, attempt to switch to domain X-M
