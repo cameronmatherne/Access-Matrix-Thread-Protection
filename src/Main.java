@@ -86,9 +86,9 @@ public class Main {
 
     // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
     public static boolean arbitrator(int domain, int threadNum, int domainNum) {
-        // Ensure the indices are within bounds
+        
         if (domain < accessMatrix.length && threadNum < accessMatrix[0].length) {
-            // Check the access matrix for permissions based on the provided parameters
+            // Check the access matrix for permissions 
             String permission = accessMatrix[domain][threadNum];
     
             // Check if the domain has permission to read or write
