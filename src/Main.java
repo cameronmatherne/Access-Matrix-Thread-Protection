@@ -53,17 +53,17 @@ public class Main {
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to read resource:");
+                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to read resource:");
                         arbitratorRead(tID, num, domainNum);
 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
+                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to write resource:");
                         arbitratorWrite(tID, num, domainNum);
 
                         arbitratorRead(tID, num, domainNum);
 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
+                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to write resource:");
                         arbitratorWrite(tID, num, domainNum);
 
                     }
@@ -71,8 +71,8 @@ public class Main {
                 // if X >= M, attempt to switch to domain X-M
                 else if (num >= numOfThreads) {
                     // THREAD ATTEMPTING TO SWITCH DO A DIFFERENT DOMAIN
-                    System.out.println("[Thread: " + tID + "(D" + domainNum + ")] Attempting to switch from D" + domainNum + " to D" + (num - numOfThreads - 1));
-                    arbitratorDomainSwitch(num - numOfThreads - 1);
+                    System.out.println("[Thread:" + tID + " (D" + domainNum + ")] Attempting to switch from D" + domainNum + " to D" + (num - numOfThreads - 1));
+                    arbitratorDomainSwitch(tID, num, domainNum);
                 }
 
             }
@@ -86,11 +86,11 @@ public class Main {
 
                 // Check if the domain has permission to read
                 if (permission.equals("R/W") || (permission.equals("R") && domain == domainNum)) {
-                    System.out.println("Permission allowed.");
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " Permission allowed.");
                     return true; // Read/Write permission is allowed
                 }
             }
-            System.out.println("Permission denied.");
+            System.out.println("[Thread:" + threadNum + " (D" + domainNum  + ")] " +  " Permission denied.");
             return false; // Permission denied
         }
 
@@ -102,41 +102,38 @@ public class Main {
 
                 // Check if the domain has permission to write
                 if (permission.equals("R/W") || (permission.equals("W") && domain == domainNum)) {
-                    System.out.println("Permission allowed.");
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " Permission allowed.");
                     return true; // Read/Write permission is allowed
                 }
             }
-            System.out.println("Permission denied.");
+            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" +  " Permission denied.");
             return false; // Permission denied
         }
 
         // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
-        public void arbitratorDomainSwitch(int domain) {
-
+        public void arbitratorDomainSwitch(int domain, int threadNum, int domainNum) {
             // acquire semaphore for access matrix
-            accessMatrixLock[domainNum][domain - numOfThreads].acquireUninterruptibly();
+            accessMatrixLock[domainNum][domain + numOfThreads].acquireUninterruptibly();
 
             // check permissions
-            if (accessMatrix[domainNum][domain - numOfThreads] == "allow") {
-                System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Attempting to switch from D" + domainNum + " to D" + domain);
+            if (accessMatrix[domainNum][domain + numOfThreads] == "allow") {
+                System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " Attempting to switch from D" + domainNum + " to D" + domain);
 
                 // release access matrix semaphore
-                accessMatrixLock[domainNum][domain - numOfThreads].release();
+                accessMatrixLock[domainNum][domain + numOfThreads].release();
 
                 domainNum = domain;
                 System.out.println("Switched to D" + domain);
 
-
             } else {
-                System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Operation failed. Permission denied.");
+                System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " Operation failed. Permission denied.");
 
                 // release access matrix semaphore
-                accessMatrixLock[domainNum][domain - numOfThreads].release();
+                accessMatrixLock[domainNum][domain + numOfThreads].release();
 
             }
-
             // yield for 3-7 clock cycles
-            waitMethod();
+            waitMethod(domain, threadNum);
         }
 
         // method might not need to be used
@@ -162,10 +159,10 @@ public class Main {
         }
     }
 
-    public static void waitMethod() {
+    public static void waitMethod(int threadNum, int domainNum) {
         Random random = new Random();
         int randomCycles = random.nextInt(4) + 3;
-        System.out.println("Yielding for " + randomCycles + " cycles");
+        System.out.println("[Thread:" + threadNum + " (D" + domainNum  + ")] " +  "Yielding for " + randomCycles + " cycles");
         for (int j = 0; j < randomCycles; j++) {
             Thread.yield();
         }
