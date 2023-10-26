@@ -22,6 +22,10 @@ public class Main {
         System.out.println("Object count: (enter a number between 3-7)");
         numOfThreads = input.nextInt();
 
+
+        accessMatrixLock = new Semaphore[numOfDomains][numOfThreads+numOfDomains+1];
+        matrixLock = new Semaphore[numOfDomains][numOfThreads+numOfDomains+1];
+
         generateMatrix();
         print2DArrayAsTable(accessMatrix);
 
@@ -50,22 +54,19 @@ public class Main {
 
                 // if X (num) < M (numOfThreads)
                 if (num < numOfThreads) {
-                    // THREAD ATTEMPTING TO READ OR WRITE
-                    //System.out.println("[Thread: " + tID + "(domainNum)]" + " attempting to read / write");
-
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to read resource:");
+                        System.out.println("[Thread: " + tID + "(D" + domainNum + ")]" + " attempting to read resource:");
                         //arbitrator();
 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
+                        System.out.println("[Thread: " + tID + "(D" + domainNum + ")]" + " attempting to write resource:");
                         //arbitrator();
                     }
                 }
                 // if X >= M, attempt to switch to domain X-M
-                else if (num >= numOfThreads & num >= numOfThreads + numOfDomains){
+                else if (num >= numOfThreads){
                     // THREAD ATTEMPTING TO SWITCH DO A DIFFERENT DOMAIN
                     System.out.println("[Thread: " + tID + "(D" + domainNum + ")] Attempting to switch from D" + domainNum + " to D" + (num-numOfThreads-1));
                     arbitrator(num-numOfThreads-1);
@@ -82,26 +83,40 @@ public class Main {
         public void arbitrator(int domain) {
             // acquire semaphore for access matrix
 
+            // 3 threads
+            // 3 domains
+
+            // random number is 4
+
+
+            accessMatrixLock[domainNum][domain-numOfThreads].acquireUninterruptibly();
+
             // check permissions
             if (accessMatrix[domainNum][domain-numOfThreads] == "allow") {
-                System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Attempting to switch from D" + domainNum + " to" );
+                System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Attempting to switch from D" + domainNum + " to D" + domain);
 
                 // release access matrix semaphore
+                accessMatrixLock[domainNum][domain-numOfThreads].release();
 
                 // acquire semaphore for values matrix
+                matrixLock[domainNum][domain-numOfThreads].acquireUninterruptibly();
+                domainNum = domain;
+                System.out.println("Switched to D" + domain);
 
-                System.out.println("Switched to D" + domainNum);
 
                 // release semaphore for values matrix
+                matrixLock[domainNum][domain-numOfThreads].release();
 
             } else  {
                 System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Operation failed. Permission denied.");
 
                 // release access matrix semaphore
+                accessMatrixLock[domainNum][domain-numOfThreads].release();
 
             }
 
             // yield for 3-7 clock cycles
+            waitMethod();
         }
 
         // method might not need to be used
@@ -126,6 +141,14 @@ public class Main {
         }
 
     }
+    public static void waitMethod() {
+        Random random = new Random();
+        int randomCycles = random.nextInt(4) + 3;
+        System.out.println("Yielding for " + randomCycles + " cycles");
+        for (int j = 0; j < randomCycles; j++) {
+            Thread.yield();
+        }
+    }
 
     public static int generateRandomNum(int lowerRange, int upperRange) {
         if (lowerRange > upperRange) {
@@ -145,16 +168,16 @@ public class Main {
         // count for labeling domains
         int count = 0;
         // create access matrix, used for permission checking
-        accessMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
+        accessMatrix = new String[numOfDomains+1][numOfThreads+numOfDomains+1];
 
         // create actual matrix, used for reading/writing values
-        myMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
+        myMatrix = new String[numOfDomains+1][numOfThreads+numOfDomains+1];
 
 
         // label corner cell
         accessMatrix[0][0] = "Domain/Object";
         // label the first row
-        for (int i = 1; i < numOfDomains + numOfThreads; i++) {
+        for (int i = 1; i < numOfDomains + numOfThreads+1; i++) {
             if (i <= numOfThreads) {
                 accessMatrix[0][i] = "F" + i;
             } else if (i > numOfThreads) {
@@ -164,14 +187,14 @@ public class Main {
         }
 
         // label the first column
-        for (int i = 1; i < numOfDomains; i++) {
+        for (int i = 1; i < numOfDomains+1; i++) {
             accessMatrix[i][0] = "           D" + i;
         }
 
         // Populate the accessMatrix with random values
-        for (int k = 1; k < numOfDomains; k++) {
-            for (int j = 1; j < numOfThreads + numOfDomains; j++) {
-                if (j < numOfThreads) {
+        for (int k = 1; k < numOfDomains+1; k++) {
+            for (int j = 1; j < numOfThreads + numOfDomains+1; j++) {
+                if (j <= numOfThreads) {
                     // Randomly select R, W, or R/W for file permissions
                     String[] filePermissions = {"R", "W", "R/W"};
                     accessMatrix[k][j] = filePermissions[random.nextInt(filePermissions.length)];
@@ -182,19 +205,19 @@ public class Main {
                 }
             }
             // overwrite the domains that are eachother and replace anything there with N/A
-            for (int i=1; i < numOfDomains; i++) {
+            for (int i=1; i < numOfDomains+1; i++) {
                 accessMatrix[i][i+numOfThreads] = "N/A";
             }
         }
         // initialize all the mutex semaphores for matrix access
-        /*
-        for (int i=0;i<numOfDomains;i++) {
-            for (int j=0;j<numOfThreads+numOfDomains; j++) {
+
+        for (int i=1;i<numOfDomains+1;i++) {
+            for (int j=1;j<numOfThreads+numOfDomains+1; j++) {
                 matrixLock[i][j] = new Semaphore(1, true);
                 accessMatrixLock[i][j] = new Semaphore(1, true);
             }
         }
-         */
+
     }
     public static void print2DArrayAsTable(String[][] table) {
         // Determine the width of each column
