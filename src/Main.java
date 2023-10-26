@@ -67,13 +67,64 @@ public class Main {
                 // if X >= M, attempt to switch to domain X-M
                 else if (num >= numOfThreads & num >= numOfThreads + numOfDomains){
                     // THREAD ATTEMPTING TO SWITCH DO A DIFFERENT DOMAIN
-                    System.out.println("[Thread: " + tID + "(D" + domainNum + ")] Attempting to switch from D" + domainNum + " to D" + (num-numOfThreads));
-                    //arbitrator();
-
+                    System.out.println("[Thread: " + tID + "(D" + domainNum + ")] Attempting to switch from D" + domainNum + " to D" + (num-numOfThreads-1));
+                    arbitrator(num-numOfThreads-1);
                 }
 
             }
         }
+
+        // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
+        public void arbitrator(int domain, int threadNum, int domainNum){
+        }
+
+        // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
+        public void arbitrator(int domain) {
+            // acquire semaphore for access matrix
+
+            // check permissions
+            if (accessMatrix[domainNum][domain-numOfThreads] == "allow") {
+                System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Attempting to switch from D" + domainNum + " to" );
+
+                // release access matrix semaphore
+
+                // acquire semaphore for values matrix
+
+                System.out.println("Switched to D" + domainNum);
+
+                // release semaphore for values matrix
+
+            } else  {
+                System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Operation failed. Permission denied.");
+
+                // release access matrix semaphore
+
+            }
+
+            // yield for 3-7 clock cycles
+        }
+
+        // method might not need to be used
+        public void writeToMatrix(int domain) {
+            Random random = new Random();
+            String[] colors = {
+                    "Red",
+                    "Green",
+                    "Blue",
+                    "Yellow",
+                    "Orange",
+                    "Purple",
+                    "Brown",
+                    "Pink",
+                    "Grey",
+                    "Black"
+            };
+
+            // pick random color
+            int colorToWrite = random.nextInt(colors.length);
+            String randomColor = colors[colorToWrite];
+        }
+
     }
 
     public static int generateRandomNum(int lowerRange, int upperRange) {
@@ -82,13 +133,6 @@ public class Main {
         }
         Random random = new Random();
         return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
-    }
-
-    // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
-    public static void arbitrator(int domain, int threadNum, int domainNum){
-    }
-    // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
-    public static void arbitrator(int domain) {
     }
     public static void generateMatrix() {
         // with this matrix design, values start at the first column and first row. (not zero)
@@ -111,9 +155,9 @@ public class Main {
         accessMatrix[0][0] = "Domain/Object";
         // label the first row
         for (int i = 1; i < numOfDomains + numOfThreads; i++) {
-            if (i < numOfThreads) {
+            if (i <= numOfThreads) {
                 accessMatrix[0][i] = "F" + i;
-            } else if (i >= numOfThreads) {
+            } else if (i > numOfThreads) {
                 count++;
                 accessMatrix[0][i] = "D" + count;
             }
@@ -133,9 +177,13 @@ public class Main {
                     accessMatrix[k][j] = filePermissions[random.nextInt(filePermissions.length)];
                 } else {
                     // Randomly select allow, N/A, or nothing for domain switching
-                    String[] domainSwitching = {"allow", "N/A", ""};
+                    String[] domainSwitching = {"allow", ""};
                     accessMatrix[k][j] = domainSwitching[random.nextInt(domainSwitching.length)];
                 }
+            }
+            // overwrite the domains that are eachother and replace anything there with N/A
+            for (int i=1; i < numOfDomains; i++) {
+                accessMatrix[i][i+numOfThreads] = "N/A";
             }
         }
         // initialize all the mutex semaphores for matrix access
