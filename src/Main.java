@@ -9,11 +9,9 @@ public class Main {
     static String myMatrix[][];
     static Semaphore accessMatrixLock[][];
     static Semaphore matrixLock[][];
-
     public static void main(String[] args) {
 
         Random random = new Random();
-
         Scanner input = new Scanner(System.in);
 
         System.out.printf("Domain count: (enter a number between 3-7)");
@@ -21,7 +19,6 @@ public class Main {
 
         System.out.println("Object count: (enter a number between 3-7)");
         numOfThreads = input.nextInt();
-
 
         accessMatrixLock = new Semaphore[numOfDomains][numOfThreads+numOfDomains+1];
         matrixLock = new Semaphore[numOfDomains][numOfThreads+numOfDomains+1];
