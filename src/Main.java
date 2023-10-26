@@ -103,15 +103,9 @@ public class Main {
     }
 
         // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
-        public void arbitrator(int domain) {
+        public void arbitratorDomainSwitch(int domain) {
+
             // acquire semaphore for access matrix
-
-            // 3 threads
-            // 3 domains
-
-            // random number is 4
-
-
             accessMatrixLock[domainNum][domain-numOfThreads].acquireUninterruptibly();
 
             // check permissions
@@ -138,7 +132,7 @@ public class Main {
         }
 
         // method might not need to be used
-        public void writeToMatrix(int domain) {
+        public String generateColorString() {
             Random random = new Random();
             String[] colors = {
                     "Red",
@@ -156,6 +150,7 @@ public class Main {
             // pick random color
             int colorToWrite = random.nextInt(colors.length);
             String randomColor = colors[colorToWrite];
+            return randomColor;
         }
 
     }
