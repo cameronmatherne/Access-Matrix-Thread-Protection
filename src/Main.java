@@ -6,9 +6,7 @@ public class Main {
     static int numOfDomains;
     static int numOfThreads;
     static String accessMatrix[][];
-    static String myMatrix[][];
     static Semaphore accessMatrixLock[][];
-    static Semaphore matrixLock[][];
     public static void main(String[] args) {
 
         Random random = new Random();
@@ -21,7 +19,6 @@ public class Main {
         numOfThreads = input.nextInt();
 
         accessMatrixLock = new Semaphore[numOfDomains][numOfThreads+numOfDomains+1];
-        matrixLock = new Semaphore[numOfDomains][numOfThreads+numOfDomains+1];
 
         generateMatrix();
         print2DArrayAsTable(accessMatrix);
@@ -95,14 +92,9 @@ public class Main {
                 // release access matrix semaphore
                 accessMatrixLock[domainNum][domain-numOfThreads].release();
 
-                // acquire semaphore for values matrix
-                matrixLock[domainNum][domain-numOfThreads].acquireUninterruptibly();
                 domainNum = domain;
                 System.out.println("Switched to D" + domain);
 
-
-                // release semaphore for values matrix
-                matrixLock[domainNum][domain-numOfThreads].release();
 
             } else  {
                 System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " Operation failed. Permission denied.");
@@ -167,10 +159,6 @@ public class Main {
         // create access matrix, used for permission checking
         accessMatrix = new String[numOfDomains+1][numOfThreads+numOfDomains+1];
 
-        // create actual matrix, used for reading/writing values
-        myMatrix = new String[numOfDomains+1][numOfThreads+numOfDomains+1];
-
-
         // label corner cell
         accessMatrix[0][0] = "Domain/Object";
         // label the first row
@@ -210,7 +198,6 @@ public class Main {
 
         for (int i=1;i<numOfDomains+1;i++) {
             for (int j=1;j<numOfThreads+numOfDomains+1; j++) {
-                matrixLock[i][j] = new Semaphore(1, true);
                 accessMatrixLock[i][j] = new Semaphore(1, true);
             }
         }
