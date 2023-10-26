@@ -51,11 +51,11 @@ public class Main {
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
-                        System.out.println("[Thread: " + tID + "(D" + domainNum + ")]" + " attempting to read resource:");
+                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to read resource:");
                         //arbitrator();
 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread: " + tID + "(D" + domainNum + ")]" + " attempting to write resource:");
+                        System.out.println("[Thread: " + tID + "(" + domainNum + ")]" + " attempting to write resource:");
                         //arbitrator();
                     }
                 }
@@ -70,8 +70,37 @@ public class Main {
         }
 
         // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
-        public void arbitrator(int domain, int threadNum, int domainNum){
+    public static boolean arbitratorRead(int domain, int threadNum, int domainNum) {
+        
+        if (domain < accessMatrix.length && threadNum < accessMatrix[0].length) {
+            // Check the access matrix for permissions 
+            String permission = accessMatrix[domain][threadNum];
+    
+            // Check if the domain has permission to read
+            if (permission.equals("R/W") || (permission.equals("R") && domain == domainNum)) {
+                System.out.println("Permission allowed.");
+                return true; // Read/Write permission is allowed
+            }
         }
+        System.out.println("Permission denied.");
+        return false; // Permission denied
+    }
+
+    public static boolean arbitratorWrite(int domain, int threadNum, int domainNum) {
+        
+        if (domain < accessMatrix.length && threadNum < accessMatrix[0].length) {
+            // Check the access matrix for permissions 
+            String permission = accessMatrix[domain][threadNum];
+    
+            // Check if the domain has permission to write
+            if (permission.equals("R/W") || (permission.equals("W") && domain == domainNum)) {
+                System.out.println("Permission allowed.");
+                return true; // Read/Write permission is allowed
+            }
+        }
+        System.out.println("Permission denied.");
+        return false; // Permission denied
+    }
 
         // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
         public void arbitrator(int domain) {
@@ -145,6 +174,13 @@ public class Main {
         }
         Random random = new Random();
         return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
+    }
+
+    // ARBITRATOR FUNCTION IN THE CASE OF A READ OR WRITE
+    public static void arbitrator(int domain, int threadNum, int domainNum){
+    }
+    // ARBITRATOR FUNCTION IN THE CASE OF A DOMAIN SWITCH
+    public static void arbitrator(int domain) {
     }
     public static void generateMatrix() {
         // with this matrix design, values start at the first column and first row. (not zero)
