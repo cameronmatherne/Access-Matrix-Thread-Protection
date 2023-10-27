@@ -129,7 +129,7 @@ public class Main {
                 System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " Operation failed. Permission denied.");
 
                 // release access matrix semaphore
-                accessMatrixLock[domainNum][domain + numOfThreads].release();
+                accessMatrixLock[domainNum][domain + numOfThreads+1].release();
 
             }
             // yield for 3-7 clock cycles
