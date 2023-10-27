@@ -23,6 +23,8 @@ public class Main {
             numOfThreads = input.nextInt();
         } while (numOfThreads < 3 || numOfThreads > 7);
 
+        input.close();
+
 
         accessMatrixLock = new Semaphore[numOfDomains][numOfThreads + numOfDomains];
 
