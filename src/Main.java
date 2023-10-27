@@ -60,11 +60,11 @@ public class Main {
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
-                        System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " attempting to read resource: ");
+                        System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " attempting to read resource: F"+columnNum);
                         arbitratorRead(threadNum, columnNum, domainNum);
 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " attempting to write resource:");
+                        System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " attempting to write resource: F"+columnNum);
                         arbitratorWrite(threadNum, columnNum, domainNum);
 
                     }
