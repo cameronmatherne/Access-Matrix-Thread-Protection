@@ -96,7 +96,7 @@ public class Main {
 
                 // Check if the domain has permission to read
                 if (permission.equals("R/W") || (permission.equals("R") && threadNum == domainNum)) {
-                    System.out.println("[Thread:" + columnNum + " (D" + domainNum + ")]" + " Permission allowed.");
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " Permission allowed.");
 
                     waitMethod(threadNum, domainNum);
                     accessMatrixLock[domainNum][columnNum].release();
@@ -119,7 +119,6 @@ public class Main {
                 if (permission.equals("R/W") || (permission.equals("W") && threadNum == domainNum)) {
                     System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " Permission allowed.");
                     System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" +  " Writes: " + generateColorString());
-
                     waitMethod(threadNum, domainNum);
                     accessMatrixLock[domainNum][columnNum].release();
                     return true; // Read/Write permission is allowed
@@ -142,7 +141,7 @@ public class Main {
                 this.domainNum = newDomain;
                 // release access matrix semaphore
                 accessMatrixLock[oldDomain][newDomain+numOfThreads].release();
-                System.out.println("Switched to D" + newDomain);
+                System.out.println("[Thread:" + threadNum + " (D" + newDomain + ")] Switched to D" + newDomain);
 
             } else {
                 System.out.println("[Thread:" + threadNum + " (D" + oldDomain + ")]" + " Operation failed. Permission denied.");
