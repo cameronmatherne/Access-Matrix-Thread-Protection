@@ -13,12 +13,17 @@ public class Main {
         Random random = new Random();
         Scanner input = new Scanner(System.in);
 
-        System.out.printf("Domain count: (enter a number between 3-7)");
-        numOfDomains = input.nextInt();
+        do{
+           System.out.printf("Domain count: (enter a number between 3-7)"); 
+           numOfDomains = input.nextInt();
+        }while(numOfDomains <3 || numOfDomains >7);
 
-        System.out.println("Object count: (enter a number between 3-7)");
-        numOfThreads = input.nextInt();
+        do{
+            System.out.println("Object count: (enter a number between 3-7)");
+            numOfThreads = input.nextInt();
+        }while(numOfThreads <3 || numOfThreads >7);
 
+         
         accessMatrixLock = new Semaphore[numOfDomains + 1][numOfThreads + numOfDomains + 1];
 
         generateMatrix();
@@ -53,20 +58,21 @@ public class Main {
                     // generate another number [0,1]
                     int secondNum = generateRandomNum(0, 1);
                     if (secondNum == 1) {
-                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to read resource:");
+                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to read resource: ");
                         arbitratorRead(tID, num, domainNum);
 
                     } else if (secondNum == 0) {
                         System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to write resource:");
                         arbitratorWrite(tID, num, domainNum);
 
-                        arbitratorRead(tID, num, domainNum);
-
+                        //arbitratorRead(tID, num, domainNum);
+/* 
                     } else if (secondNum == 0) {
-                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to write resource:");
+                        System.out.println("[Thread:" + tID + " (D" + domainNum + ")]" + " attempting to write resource:"+"F" +num);
                         arbitratorWrite(tID, num, domainNum);
 
                     }
+                */}
                 }
                 // if X >= M, attempt to switch to domain X-M
                 else if (num >= numOfThreads) {
@@ -87,6 +93,7 @@ public class Main {
                 // Check if the domain has permission to read
                 if (permission.equals("R/W") || (permission.equals("R") && domain == domainNum)) {
                     System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " Permission allowed.");
+                    
                     return true; // Read/Write permission is allowed
                 }
             }
@@ -103,6 +110,7 @@ public class Main {
                 // Check if the domain has permission to write
                 if (permission.equals("R/W") || (permission.equals("W") && domain == domainNum)) {
                     System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")]" + " Permission allowed.");
+                    System.out.println("[Thread:" + threadNum + " Writes: " + generateColorString() );
                     return true; // Read/Write permission is allowed
                 }
             }
@@ -137,7 +145,7 @@ public class Main {
         }
 
         // method might not need to be used
-        public String generateColorString() {
+        public static String generateColorString() {
             Random random = new Random();
             String[] colors = {
                     "Red",
