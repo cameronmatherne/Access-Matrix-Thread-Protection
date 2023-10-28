@@ -1,3 +1,4 @@
+package com.company;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
@@ -197,42 +198,31 @@ public class Main {
     }
 
     public static void generateMatrix() {
-        // with this matrix design, values start at the first column and first row. (not zero)
-        // the [0] index in both dimensions is reserved for labels used when printing matrix.
-        // so accessMatrix[0][n] and accessMatrix[n][0] will not be actual values !!
-
         Random random = new Random();
-        // count for labeling domains
-        int count = 0;
-        // create access matrix, used for permission checking
-        accessMatrix = new String[numOfDomains][numOfThreads + numOfDomains];
+        // Create access matrix, used for permission checking
+        accessMatrix = new String[numOfDomains+1][numOfThreads + numOfDomains+1];
 
-
-        /*
-
-        // label corner cell
+        // Label corner cell
         accessMatrix[0][0] = "Domain/Object";
-        // label the first row
-        for (int i = 0; i < numOfDomains + numOfThreads; i++) {
+
+        // Label the first row
+        for (int i = 1; i <= numOfThreads+numOfDomains; i++) {
             if (i <= numOfThreads) {
                 accessMatrix[0][i] = "F" + i;
-            } else if (i > numOfThreads) {
-                count++;
-                accessMatrix[0][i] = "D" + count;
+            } else {
+                accessMatrix[0][i] = "D" + (i - numOfThreads);
             }
         }
 
-        // label the first column
-        for (int i = 1; i < numOfDomains + 1; i++) {
-            accessMatrix[i][0] = "           D" + i;
+        // Label the first column
+        for (int i = 1; i <= numOfDomains; i++) {
+            accessMatrix[i][0] = "D" + i;
         }
 
-         */
-
         // Populate the accessMatrix with random values
-        for (int k = 0; k < numOfDomains; k++) {
-            for (int j = 0; j < numOfThreads+numOfDomains; j++) {
-                if (j < numOfThreads) {
+        for (int k = 1; k <= numOfDomains; k++) {
+            for (int j = 1; j <= numOfThreads+numOfDomains; j++) {
+                if (j <= numOfThreads) {
                     // Randomly select R, W, or R/W for file permissions
                     String[] filePermissions = {"R", "W", "R/W"};
                     accessMatrix[k][j] = filePermissions[random.nextInt(filePermissions.length)];
@@ -242,15 +232,15 @@ public class Main {
                     accessMatrix[k][j] = domainSwitching[random.nextInt(domainSwitching.length)];
                 }
             }
-            // overwrite the domains that are eachother and replace anything there with N/A
-            for (int i = 0; i < numOfDomains; i++) {
-                accessMatrix[i][i+numOfThreads] = "N/A";
-            }
+            // Overwrite the domains that are each other and replace anything there with N/A
+            accessMatrix[k][k+numOfThreads] = "N/A";
         }
 
-        // initialize all the mutex semaphores for matrix access
-        for (int i = 0; i < numOfDomains; i++) {
-            for (int j = 0; j < numOfThreads + numOfDomains; j++) {
+        // Initialize all the mutex semaphores for matrix access
+        accessMatrixLock = new Semaphore[numOfDomains+1][numOfThreads + numOfDomains+1];
+
+        for (int i = 0; i < accessMatrixLock.length; i++) {
+            for (int j = 0; j < accessMatrixLock[i].length; j++) {
                 accessMatrixLock[i][j] = new Semaphore(1, true);
             }
         }
@@ -262,7 +252,7 @@ public class Main {
         for (int col = 0; col < table[0].length; col++) {
             int maxWidth = 0;
             for (int row = 0; row < table.length; row++) {
-                int cellWidth = table[row][col].length();
+                int cellWidth = table[row][col] != null ? table[row][col].length() : 0;
                 if (cellWidth > maxWidth) {
                     maxWidth = cellWidth;
                 }
@@ -273,7 +263,7 @@ public class Main {
         // Print the table
         for (int row = 0; row < table.length; row++) {
             for (int col = 0; col < table[row].length; col++) {
-                String cell = table[row][col];
+                String cell = table[row][col] != null ? table[row][col] : "";
                 System.out.print(cell);
                 // Add padding to align columns
                 for (int padding = 0; padding < columnWidths[col] - cell.length() + 2; padding++) {
