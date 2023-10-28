@@ -1,4 +1,4 @@
-package com.company;
+//package com.company;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
@@ -10,10 +10,8 @@ public class Main {
     static Semaphore accessMatrixLock[][];
 
     public static void main(String[] args) {
-
         Random random = new Random();
         Scanner input = new Scanner(System.in);
-
         do {
             System.out.printf("Domain count: (enter a number between 3-7)");
             numOfDomains = input.nextInt();
@@ -154,7 +152,7 @@ public class Main {
 
             }
             // yield for 3-7 clock cycles
-            waitMethod(threadNum, threadNum);
+            waitMethod(threadNum, domainNum);
         }
 
         // method might not need to be used
