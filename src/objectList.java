@@ -4,7 +4,7 @@ import java.util.concurrent.Semaphore;
 public class objectList {
     static int numOfDomains;
     static int numOfThreads;
-    static List<List<String>> accessMatrix;
+    static List<List<String>> accessList;
     static List<List<Semaphore>> accessMatrixLock;
 
     public static void main(String[] args) {
@@ -32,8 +32,10 @@ public class objectList {
             accessMatrixLock.add(row);
         }
 
-        generateMatrix();
-        printList(accessMatrix);
+        generateAccessList();
+        printList(accessList);
+
+        //generateLists();
 
         // Create and start a thread for each file object
         for (int i = 0; i < numOfDomains; i++) {
@@ -77,60 +79,61 @@ public class objectList {
                 }
             }
         }
+
         public static boolean arbitratorRead(int threadNum, int columnNum, int domainNum) {
-        accessMatrixLock.get(domainNum).get(columnNum).acquireUninterruptibly();
-        if (threadNum < accessMatrix.size() && columnNum < accessMatrix.get(0).size()) {
-            String permission = accessMatrix.get(threadNum).get(columnNum);
-            if (permission.equals("R/W") || (permission.equals("R") && threadNum == domainNum)) {
-                System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission allowed.");
-                waitMethod(threadNum, domainNum);
-                accessMatrixLock.get(domainNum).get(columnNum).release();
-                return true;
+            accessMatrixLock.get(domainNum).get(columnNum).acquireUninterruptibly();
+            if (threadNum < accessList.size() && columnNum < accessList.get(0).size()) {
+                String permission = accessList.get(threadNum).get(columnNum);
+                if (permission.equals("R/W") || (permission.equals("R") && threadNum == domainNum)) {
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission allowed.");
+                    waitMethod(threadNum, domainNum);
+                    accessMatrixLock.get(domainNum).get(columnNum).release();
+                    return true;
+                }
             }
+            waitMethod(threadNum, domainNum);
+            accessMatrixLock.get(domainNum).get(columnNum).release();
+            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission denied.");
+            return false;
         }
-        waitMethod(threadNum, domainNum);
-        accessMatrixLock.get(domainNum).get(columnNum).release();
-        System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission denied.");
-        return false;
-    }
 
-    public static boolean arbitratorWrite(int threadNum, int columnNum, int domainNum) {
-        accessMatrixLock.get(domainNum).get(columnNum).acquireUninterruptibly();
-        if (threadNum < accessMatrix.size() && columnNum < accessMatrix.get(0).size()) {
-            String permission = accessMatrix.get(threadNum).get(columnNum);
-            if (permission.equals("R/W") || (permission.equals("W") && threadNum == domainNum)) {
-                System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission allowed.");
-                System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Writes: " + generateColorString());
-                waitMethod(threadNum, domainNum);
-                accessMatrixLock.get(domainNum).get(columnNum).release();
-                return true;
+        public static boolean arbitratorWrite(int threadNum, int columnNum, int domainNum) {
+            accessMatrixLock.get(domainNum).get(columnNum).acquireUninterruptibly();
+            if (threadNum < accessList.size() && columnNum < accessList.get(0).size()) {
+                String permission = accessList.get(threadNum).get(columnNum);
+                if (permission.equals("R/W") || (permission.equals("W") && threadNum == domainNum)) {
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission allowed.");
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Writes: " + generateColorString());
+                    waitMethod(threadNum, domainNum);
+                    accessMatrixLock.get(domainNum).get(columnNum).release();
+                    return true;
+                }
             }
+            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission denied.");
+            waitMethod(threadNum, domainNum);
+            accessMatrixLock.get(domainNum).get(columnNum).release();
+            return false;
         }
-        System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Permission denied.");
-        waitMethod(threadNum, domainNum);
-        accessMatrixLock.get(domainNum).get(columnNum).release();
-        return false;
-    }
 
-    public void arbitratorDomainSwitch(int threadNum, int newDomain, int oldDomain) {
-        if (newDomain >= 0 && newDomain < accessMatrix.size() && oldDomain >= 0 && oldDomain < accessMatrix.size()) {
-            accessMatrixLock.get(oldDomain).get(newDomain + numOfThreads).acquireUninterruptibly();
-            if (accessMatrix.get(oldDomain).get(newDomain + numOfThreads).equals("allow")) {
-                System.out.println("[Thread:" + threadNum + " (D" + oldDomain + ")]" + " Attempting to switch from D" + oldDomain + " to D" + newDomain);
-                this.domainNum = newDomain;
-                accessMatrixLock.get(oldDomain).get(newDomain + numOfThreads).release();
-                System.out.println("[Thread:" + threadNum + " (D" + newDomain + ")]" + " Switched to D" + newDomain);
+        public void arbitratorDomainSwitch(int threadNum, int newDomain, int oldDomain) {
+            if (newDomain >= 0 && newDomain < accessList.size() && oldDomain >= 0 && oldDomain < accessList.size()) {
+                accessMatrixLock.get(oldDomain).get(newDomain + numOfThreads).acquireUninterruptibly();
+                if (accessList.get(oldDomain).get(newDomain + numOfThreads).equals("allow")) {
+                    System.out.println("[Thread:" + threadNum + " (D" + oldDomain + ")]" + " Attempting to switch from D" + oldDomain + " to D" + newDomain);
+                    this.domainNum = newDomain;
+                    accessMatrixLock.get(oldDomain).get(newDomain + numOfThreads).release();
+                    System.out.println("[Thread:" + threadNum + " (D" + newDomain + ")]" + " Switched to D" + newDomain);
+                } else {
+                    System.out.println("[Thread:" + threadNum + " (D" + oldDomain + ")]" + " Operation failed. Permission denied");
+                    accessMatrixLock.get(oldDomain).get(newDomain + numOfThreads).release();
+                }
+                waitMethod(threadNum, threadNum);
             } else {
-                System.out.println("[Thread:" + threadNum + " (D" + oldDomain + ")]" + " Operation failed. Permission denied");
-                accessMatrixLock.get(oldDomain).get(newDomain + numOfThreads).release();
+                System.out.println("[Thread:" + threadNum + "] Invalid domain numbers.");
             }
-            waitMethod(threadNum, threadNum);
-        } else {
-            System.out.println("[Thread:" + threadNum + "] Invalid domain numbers.");
         }
-    }
 
-    public static String generateColorString() {
+        public static String generateColorString() {
             Random random = new Random();
             String[] colors = {
                     "Red",
@@ -160,21 +163,104 @@ public class objectList {
             }
         }
 
-        public static int generateRandomNum(int lowerRange, int upperRange) {
-            if (lowerRange > upperRange) {
-                throw new IllegalArgumentException("Lower range cannot be greater than the upper range.");
+    }
+
+    public static int generateRandomNum(int lowerRange, int upperRange) {
+        if (lowerRange > upperRange) {
+            throw new IllegalArgumentException("Lower range cannot be greater than the upper range.");
+        }
+        Random random = new Random();
+        return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
+    }
+
+
+    public static String generatePermission(String type) {
+        String perm = null;
+        if (type == "domain") {
+            int rand = generateRandomNum(0, 3);
+            switch (rand) {
+                case 0:
+                    perm = "R";
+                    break;
+                case 1:
+                    perm = "W";
+                    break;
+                case 2:
+                    perm = "R/W";
+                    break;
+                case 3:
+                    perm = " ";
+                    break;
             }
-            Random random = new Random();
-            return random.nextInt(upperRange - lowerRange + 1) + lowerRange;
+        } else if (type == "object") {
+            int rand = generateRandomNum(0, 1);
+            switch (rand) {
+                case 0:
+                    perm = "allow";
+                    break;
+                case 1:
+                    perm = " ";
+                    break;
+            }
+        }
+        return perm;
+    }
+
+    public static String generateRow(int i, String type) {
+        String row = null;
+        switch (type) {
+            case "object":
+                StringBuilder domainStringBuilder = new StringBuilder();
+                for (int k = 0; k < numOfDomains; k++) {
+                    String perm = generatePermission("domain");
+                    if (perm != " ") {
+                        domainStringBuilder.append("D" + (k + 1) + ": " + perm);
+                        if (k < numOfDomains - 1) {
+                            domainStringBuilder.append(", ");
+                        }
+                    }
+                }
+                row = "F" + (i + 1) + " --> " + domainStringBuilder.toString();
+                return row;
+            case "domain":
+                StringBuilder objectStringBuilder = new StringBuilder();
+                for (int k = 0; k < numOfDomains; k++) {
+                    String perm = generatePermission("object");
+                    if (perm != " ") {
+                        objectStringBuilder.append("D" + (k + 1) + ": " + perm);
+                        if (k < numOfDomains - 2) {
+                            objectStringBuilder.append(", ");
+                        }
+                    }
+                }
+                row = "D" + (i + 1) + " --> " + objectStringBuilder.toString();
+                return row;
+        }
+        return row;
+    }
+
+    public static void generateLists() {
+        String[] objectLists = new String[numOfThreads];
+        for (int i = 0; i < numOfThreads; i++) {
+            objectLists[i] = generateRow(i, "domain");
+            System.out.println(objectLists[i]);
+        }
+        String[] domainLists = new String[numOfDomains];
+        for (int i = 0; i < numOfDomains; i++) {
+            domainLists[i] = generateRow(i, "object");
+            System.out.println(domainLists[i]);
         }
     }
 
-    public static void generateMatrix() {
+
+    public static void generateAccessList() {
         Random random = new Random();
         int count = 0;
-        accessMatrix = new ArrayList<>();
-        for (int i = 0; i < numOfDomains + 1; i++) {
-            List<String> row = new ArrayList<>();
+        accessList = new ArrayList<>();
+        List<String> row = new ArrayList<>();
+        for (int i = 0; i < numOfThreads; i++) {
+            row.add(generateRow(i, "object"));
+            /*
             for (int j = 0; j < numOfThreads + numOfDomains + 1; j++) {
                 if (j <= numOfThreads) {
                     row.add("F" + j);
@@ -183,29 +269,42 @@ public class objectList {
                     row.add("D" + count);
                 }
             }
-            accessMatrix.add(row);
+             */
+            accessList.add(row);
         }
-
+        for (int i=0; i < numOfDomains; i++) {
+            row.add(generateRow(i, "domain"));
+        }
+        /*
         for (int k = 2; k < numOfDomains + 1; k++) {
             for (int j = 2; j < numOfThreads + numOfDomains + 1; j++) {
                 if (j < numOfThreads) {
                     String[] filePermissions = {"R", "W", "R/W"};
-                    accessMatrix.get(k).add(filePermissions[random.nextInt(filePermissions.length)]);
+                    accessList.get(k).add(filePermissions[random.nextInt(filePermissions.length)]);
                 } else {
                     String[] domainSwitching = {"allow", ""};
-                    accessMatrix.get(k).add(domainSwitching[random.nextInt(domainSwitching.length)]);
+                    accessList.get(k).add(domainSwitching[random.nextInt(domainSwitching.length)]);
                 }
             }
             for (int i = 1; i < numOfDomains; i++) {
-                accessMatrix.get(i).set(i + numOfThreads, "N/A");
+                accessList.get(i).set(i + numOfThreads, "N/A");
+                }
             }
-        }
+         */
+
     }
 
     public static void printList(List<List<String>> table) {
+
+        for (int i=0; i < table.size() ; i++) {
+            List<String> currentRow = table.get(i);
+            for (int k=0; k < currentRow.size(); k++) {
+                System.out.println(currentRow.get(k));
+            }
+        }
+        /*
         for (int row = 1; row < table.size(); row++) {
             List<String> rowList = table.get(row);
-            System.out.print(rowList.get(0) + " --> ");
             for (int col = 1; col < rowList.size(); col++) {
                 String cell = rowList.get(col);
                 if (!cell.equals("")) {
@@ -215,7 +314,8 @@ public class objectList {
                     }
                 }
             }
-            System.out.println();
-        }
+
+         */
+        System.out.println();
     }
 }
