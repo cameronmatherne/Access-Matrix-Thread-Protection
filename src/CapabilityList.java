@@ -110,6 +110,8 @@ public class CapabilityList {
                             String color = generateColorString();
                             System.out.println("[Domain " + (domainNum + 1) + "] Writing '" + color + "' to resource " + object);
                         }
+
+                        waitMethod(domainNum+1); // Wait between permissions
         
                         List<String> switchList = switchMatrix.get(domainNum);
         
@@ -155,6 +157,15 @@ public class CapabilityList {
             int colorToWrite = random.nextInt(colors.length);
             String randomColor = colors[colorToWrite];
             return randomColor;
+        }
+
+        public static void waitMethod(int threadNum) {
+            Random random = new Random();
+            int randomCycles = random.nextInt(4) + 3;
+            System.out.println("[Domain " + threadNum + "] Yielding for " + randomCycles + " cycles");
+            for (int j = 0; j < randomCycles; j++) {
+                Thread.yield();
+            }
         }
         
 
