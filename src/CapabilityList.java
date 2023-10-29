@@ -37,9 +37,16 @@ public class CapabilityList {
             }
             for (int k = 0; k < numOfDomains; k++) {
                 if (i != k) {
-                    switchList.add("D" + (k + 1) + ":allow");
+                    // Generate a random boolean (true or false)
+                    boolean includeAllow = new Random().nextBoolean();
+                    
+                    // Add "allow" to the switchList with a 50% chance
+                    if (includeAllow) {
+                        switchList.add("D" + (k + 1) + ":allow");
+                    }
                 }
             }
+            
             capabilityLists.add(capabilityList);
             switchMatrix.add(switchList);
         }
@@ -75,34 +82,78 @@ public class CapabilityList {
             for (int i = 0; i < 5; i++) {
                 int objectNum = generateRandomNum(0, numOfObjects - 1);
                 String object = "F" + (objectNum + 1);
-                System.out.println("[Domain " + (domainNum + 1) + "] Requesting access to " + object);
-
+                int action = random.nextInt(2); // 0 - Read, 1 - Write
+                String actionText = (action == 0) ? "Read" : "Write";
+                System.out.println("[Domain " + (domainNum + 1) + "] Requesting " + actionText + " access to " + object);
+        
                 accessMatrixLock.get(domainNum).get(objectNum).acquireUninterruptibly();
                 if (capabilityLists.get(domainNum).containsKey(object)) {
                     String permissions = capabilityLists.get(domainNum).get(object);
-                    int action = random.nextInt(3); // 0 - Read, 1 - Write, 2 - Read/Write
-                    if ((action == 0 && permissions.contains("R")) ||
-                            (action == 1 && permissions.contains("W")) ||
-                            (action == 2 && permissions.contains("R/W"))) {
-                        System.out.println("[Domain " + (domainNum + 1) + "] Access granted: " + object + " (" +
-                                (action == 0 ? "Read" : (action == 1 ? "Write" : "Read/Write")) + ")");
-                        // Display domains that can be switched to
-                        List<String> switchList = switchMatrix.get(domainNum);
-                        System.out.print("[Domain " + (domainNum + 1) + "] Can switch to: ");
-                        for (String switchDomain : switchList) {
-                            System.out.print(switchDomain + ", ");
+                    boolean accessGranted = false;
+                    if (action == 0 && permissions.contains("R")) {
+                        accessGranted = true;
+                    } else if (action == 1 && permissions.contains("W")) {
+                        accessGranted = true;
+                    } else if (action == 0 && permissions.contains("R/W")) {
+                        accessGranted = true;
+                    }
+        
+                    if (accessGranted) {
+                        System.out.println("[Domain " + (domainNum + 1) + "] Access granted");
+        
+                        if (action == 1) {
+                            // Domain has Write permission, print a random color
+                            String color = generateColorString();
+                            System.out.println("[Domain " + (domainNum + 1) + "] Writing '" + color + "' to resource " + object);
                         }
-                        System.out.println();
+        
+                        List<String> switchList = switchMatrix.get(domainNum);
+        
+                        // Check if there are any domains available for switching
+                        if (!switchList.isEmpty()) {
+                            // Generate a random index to select a domain to switch to
+                            int randomSwitchIndex = random.nextInt(switchList.size());
+                            String selectedSwitch = switchList.get(randomSwitchIndex);
+        
+                            // Modify the output format for domain switching attempts
+                            System.out.println("[Domain " + (domainNum + 1) + "] Attempting to switch to: " + selectedSwitch);
+                        } else {
+                            System.out.println("[Domain " + (domainNum + 1) + "] No domains available for switching.");
+                        }
                     } else {
-                        System.out.println("[Domain " + (domainNum + 1) + "] Access denied: " + object + " (" +
-                                (action == 0 ? "Read" : (action == 1 ? "Write" : "Read/Write")) + ")");
+                        System.out.println("[Domain " + (domainNum + 1) + "] Access denied");
                     }
                 } else {
-                    System.out.println("[Domain " + (domainNum + 1) + "] Access denied: " + object);
+                    System.out.println("[Domain " + (domainNum + 1) + "] Access denied");
                 }
                 accessMatrixLock.get(domainNum).get(objectNum).release();
             }
         }
+
+        // method might not need to be used
+        public static String generateColorString() {
+            Random random = new Random();
+            String[] colors = {
+                    "Red",
+                    "Green",
+                    "Blue",
+                    "Yellow",
+                    "Orange",
+                    "Purple",
+                    "Brown",
+                    "Pink",
+                    "Grey",
+                    "Black"
+            };
+
+            // pick random color
+            int colorToWrite = random.nextInt(colors.length);
+            String randomColor = colors[colorToWrite];
+            return randomColor;
+        }
+        
+
+
     }
 
     public static String generateRandomPermissions(Random random) {
@@ -151,7 +202,4 @@ public class CapabilityList {
             System.out.println(output.toString());
         }
     }
-    
-    
-    
 }
