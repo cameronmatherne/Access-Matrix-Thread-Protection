@@ -8,7 +8,7 @@ public class objectList {
     static List<List<String>> domainAccessLists;
     static List<Semaphore> resourceSemaphores; // Semaphores for controlling resource access
 
-    public static void main(String[] args) {
+    public static void run() {
         Random random = new Random();
         Scanner input = new Scanner(System.in);
 
@@ -50,31 +50,30 @@ public class objectList {
         }
 
         @Override
-public void run() {
-    for (int i = 0; i < 5; i++) {
-        int action = generateRandomNum(0, 2); // 0 - Read, 1 - Write, 2 - Domain Switch
-        String actionText = (action == 0) ? "Read" : (action == 1) ? "Write" : "Domain Switch";
+        public void run() {
+            for (int i = 0; i < 5; i++) {
+                int action = generateRandomNum(0, 2); // 0 - Read, 1 - Write, 2 - Domain Switch
+                String actionText = (action == 0) ? "Read" : (action == 1) ? "Write" : "Domain Switch";
 
-        if (action == 0 || action == 1) {
-            int targetNum = generateRandomNum(0, numOfThreads - 1);
-            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Attempting to " + actionText + " resource: F" + (targetNum + 1));
+                if (action == 0 || action == 1) {
+                    int targetNum = generateRandomNum(0, numOfThreads - 1);
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Attempting to " + actionText + " resource: F" + (targetNum + 1));
 
-            if (action == 0) {
-                arbitratorRead(threadNum, targetNum, domainNum);
-            } else if (action == 1) {
-                arbitratorWrite(threadNum, targetNum, domainNum);
+                    if (action == 0) {
+                        arbitratorRead(threadNum, targetNum, domainNum);
+                    } else if (action == 1) {
+                        arbitratorWrite(threadNum, targetNum, domainNum);
+                    }
+                } else {
+                    int newDomain;
+                    do {
+                        newDomain = generateRandomNum(1, numOfDomains - 1);
+                    } while (newDomain == domainNum);
+                    System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Attempting to switch to D" + (newDomain));
+                    arbitratorDomainSwitch(threadNum, newDomain, domainNum);
+                }
             }
-        } else {
-            int newDomain;
-            do {
-                newDomain = generateRandomNum(1, numOfDomains - 1);
-            } while (newDomain == domainNum);
-            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Attempting to switch to D" + (newDomain));
-            arbitratorDomainSwitch(threadNum, newDomain, domainNum);
         }
-    }
-}
-
     }
 
     public static boolean arbitratorRead(int threadNum, int targetNum, int domainNum) {
@@ -121,23 +120,22 @@ public void run() {
     public static void arbitratorDomainSwitch(int threadNum, int domainNum, int domainNum2) {
         Random random = new Random();
         int newDomain;
-    
+
         do {
             newDomain = random.nextInt(numOfDomains);
         } while (newDomain == domainNum); // Ensure that the newDomain is different from the current domain
-    
+
         String permission = domainAccessLists.get(domainNum).get(newDomain);
-    
+
         if (permission.equals("allow")) {
             System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Domain switch allowed to D" + (newDomain));
             domainNum = newDomain; // Update domainNum with newDomain
         } else {
             System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Domain switch denied.");
         }
-    
+
         waitMethod(threadNum, domainNum);
     }
-    
 
     public static void waitMethod(int threadNum, int domainNum) {
         Random random = new Random();
@@ -225,16 +223,16 @@ public void run() {
     public static String generateColorString() {
         Random random = new Random();
         String[] colors = {
-            "Red",
-            "Green",
-            "Blue",
-            "Yellow",
-            "Orange",
-            "Purple",
-            "Brown",
-            "Pink",
-            "Grey",
-            "Black"
+                "Red",
+                "Green",
+                "Blue",
+                "Yellow",
+                "Orange",
+                "Purple",
+                "Brown",
+                "Pink",
+                "Grey",
+                "Black"
         };
 
         // Pick a random color
