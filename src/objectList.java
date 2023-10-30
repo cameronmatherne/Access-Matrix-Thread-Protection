@@ -67,9 +67,9 @@ public void run() {
         } else {
             int newDomain;
             do {
-                newDomain = generateRandomNum(0, numOfDomains - 1);
+                newDomain = generateRandomNum(1, numOfDomains - 1);
             } while (newDomain == domainNum);
-            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Attempting to switch to D" + (newDomain + 1));
+            System.out.println("[Thread:" + threadNum + " (D" + domainNum + ")] Attempting to switch to D" + (newDomain));
             arbitratorDomainSwitch(threadNum, newDomain, domainNum);
         }
     }
